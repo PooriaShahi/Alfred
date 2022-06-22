@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Pooria Shahi <PooriaPro@gmail.com>
 
 */
 package cmd
@@ -13,28 +13,19 @@ import (
 // gitlabCmd represents the gitlab command
 var gitlabCmd = &cobra.Command{
 	Use:   "gitlab",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Gitlab Operations",
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("gitlab called")
+		fmt.Println("")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(gitlabCmd)
+	gitlabCmd.PersistentFlags().String("gitlab-url", "https://gitlab.com", "Gitlab url")
+	gitlabCmd.PersistentFlags().String("gitlab-api-token", "", "Gitlab api token")
+	gitlabCmd.PersistentFlags().StringP("project", "p", "", "Gitlab Project Name")
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// gitlabCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// gitlabCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	gitlabCmd.MarkPersistentFlagRequired("gitlab-api-token")
+	gitlabCmd.MarkPersistentFlagRequired("project")
 }
