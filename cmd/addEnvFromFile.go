@@ -22,10 +22,8 @@ var addEnvFromFileCmd = &cobra.Command{
 	Short: "Add environment variables from a file to a specific project in gitlab",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		var fileLines []string
-		res := make(map[string]string)
-
 		file, _ := cmd.Flags().GetString("from-file")
+		env, _ := cmd.Flags().GetString("env")
 		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
 		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
 		gitlabProject, _ := cmd.Flags().GetString("project")
@@ -35,28 +33,18 @@ var addEnvFromFileCmd = &cobra.Command{
 		}
 
 		readFile, err := os.Open(file)
-
 		if err != nil {
-			fmt.Println(err)
+			helpers.CmdErrorHandler(err)
 		}
-		fileScanner := bufio.NewScanner(readFile)
 
+		fileScanner := bufio.NewScanner(readFile)
 		fileScanner.Split(bufio.ScanLines)
 
 		for fileScanner.Scan() {
-			fileLines = append(fileLines, fileScanner.Text())
-		}
-
-		for _, v := range fileLines {
-			tmp := strings.Split(v, "=")
-			res[tmp[0]] = tmp[1]
-		}
-
-		env, _ := cmd.Flags().GetString("env")
-		for key, value := range res {
+			tmp := strings.Split(fileScanner.Text(), "=")
 			postBody, _ := json.Marshal(map[string]string{
-				"key":               key,
-				"value":             value,
+				"key":               tmp[0],
+				"value":             tmp[1],
 				"environment_scope": env,
 			})
 
@@ -64,7 +52,8 @@ var addEnvFromFileCmd = &cobra.Command{
 			if err != nil {
 				helpers.CmdErrorHandler(err)
 			}
-			fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", key, value, env))
+			fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", tmp[0], tmp[1], env))
+
 		}
 
 		readFile.Close()
