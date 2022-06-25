@@ -16,7 +16,7 @@ import (
 // addEnvCmd represents the addEnv command
 var addEnvCmd = &cobra.Command{
 	Use:   "addEnv",
-	Short: "Add environment variables from CLI or from a file to a specific project in gitlab",
+	Short: "Add environment variables from CLI to a specific project in gitlab",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
@@ -46,7 +46,6 @@ var addEnvCmd = &cobra.Command{
 
 func init() {
 	gitlabCmd.AddCommand(addEnvCmd)
-	addEnvCmd.PersistentFlags().String("from-file", "false", "Path of env file")
 	addEnvCmd.PersistentFlags().StringP("key", "k", "", "Key of env")
 	addEnvCmd.PersistentFlags().StringP("value", "v", "", "Value of env")
 	addEnvCmd.PersistentFlags().StringP("env", "e", "*", "environment of gitlab variable")
