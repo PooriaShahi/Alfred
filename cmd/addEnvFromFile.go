@@ -25,7 +25,7 @@ var addEnvFromFileCmd = &cobra.Command{
 		var fileLines []string
 		res := make(map[string]string)
 
-		file, _ := (cmd.Flags().GetString("from-file"))
+		file, _ := cmd.Flags().GetString("from-file")
 		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
 		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
 		gitlabProject, _ := cmd.Flags().GetString("project")
