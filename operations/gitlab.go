@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"reflect"
+	"strings"
 )
 
 var client http.Client
@@ -74,4 +76,49 @@ func GitlabVariablesDeleteRequest(gitlabUrl string, gitlabApiToken string, proje
 		return nil, err
 	}
 	return result, nil
+}
+
+func GitlabGetFileRequest(gitlabUrl string, gitlabApiToken string, projectId string, filename string, extension string, branch string) ([]byte, error) {
+	url := gitlabUrl + "/api/v4/projects/" + projectId + "/repository/files/src%2Fmain%2Fresources%2F" + filename + "%2E" + extension + "?ref=" + branch
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("PRIVATE-TOKEN", gitlabApiToken)
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func Walk(m map[string]interface{}) {
+	for k, v := range m {
+
+		kind := reflect.ValueOf(v).Kind()
+
+		if kind == reflect.Map {
+			new := make(map[string]interface{})
+			newValue := v.(map[string]interface{})
+			for key, value := range newValue {
+				new[k+"_"+key] = value
+			}
+			Walk(new)
+		}
+
+		if kind == reflect.Int {
+			fmt.Printf("%v=%v\n", strings.ToUpper(k), v)
+		}
+
+		if kind == reflect.String {
+			fmt.Printf("%v=%v\n", strings.ToUpper(k), v)
+		}
+
+		if kind == reflect.Bool {
+			fmt.Printf("%v=%v\n", strings.ToUpper(k), v)
+		}
+	}
 }
