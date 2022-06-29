@@ -5,13 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"alfred/helpers"
 	"alfred/operations"
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -27,36 +21,8 @@ var addEnvFromFileCmd = &cobra.Command{
 		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
 		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
 		gitlabProject, _ := cmd.Flags().GetString("project")
-		projectId, err := operations.GitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
-		if err != nil {
-			helpers.CmdErrorHandler(err)
-		}
 
-		readFile, err := os.Open(file)
-		if err != nil {
-			helpers.CmdErrorHandler(err)
-		}
-
-		fileScanner := bufio.NewScanner(readFile)
-		fileScanner.Split(bufio.ScanLines)
-
-		for fileScanner.Scan() {
-			tmp := strings.Split(fileScanner.Text(), "=")
-			postBody, _ := json.Marshal(map[string]string{
-				"key":               tmp[0],
-				"value":             tmp[1],
-				"environment_scope": env,
-			})
-
-			_, err = operations.GitlabVariablesPostRequest(gitlabUrl, gitlabApiToken, projectId, postBody)
-			if err != nil {
-				helpers.CmdErrorHandler(err)
-			}
-			fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", tmp[0], tmp[1], env))
-
-		}
-
-		readFile.Close()
+		operations.AddEnvFromFile(gitlabUrl, gitlabApiToken, gitlabProject, file, env)
 	},
 }
 
