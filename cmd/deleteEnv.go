@@ -16,13 +16,12 @@ var deleteEnvCmd = &cobra.Command{
 	Short: "Delete environment variables from CLI or from a file to a specific project in gitlab",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
-		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
+		gitlab := operations.GetGitlabDataObject()
 		gitlabProject, _ := cmd.Flags().GetString("project")
 		key, _ := cmd.Flags().GetString("key")
 		env, _ := cmd.Flags().GetString("env")
 
-		operations.DeleteEnv(gitlabUrl, gitlabApiToken, gitlabProject, key, env)
+		gitlab.DeleteEnv(gitlabProject, key, env)
 	},
 }
 

@@ -16,12 +16,11 @@ var generateEnvsSpringBootCmd = &cobra.Command{
 	Short: "Generate Environment Variables for Java Spring Boot Project",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
-		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
+		gitlab := operations.GetGitlabDataObject()
 		gitlabProject, _ := cmd.Flags().GetString("project")
 		gitlabBranch, _ := cmd.Flags().GetString("branch")
 
-		operations.GenerateEnvsSpringBoot(gitlabUrl, gitlabApiToken, gitlabProject, gitlabBranch)
+		gitlab.GenerateEnvsSpringBoot(gitlabProject, gitlabBranch)
 	},
 }
 

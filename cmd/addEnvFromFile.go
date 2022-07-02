@@ -18,11 +18,10 @@ var addEnvFromFileCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("from-file")
 		env, _ := cmd.Flags().GetString("env")
-		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
-		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
+		gitlab := operations.GetGitlabDataObject()
 		gitlabProject, _ := cmd.Flags().GetString("project")
 
-		operations.AddEnvFromFile(gitlabUrl, gitlabApiToken, gitlabProject, file, env)
+		gitlab.AddEnvFromFile(gitlabProject, file, env)
 	},
 }
 

@@ -13,17 +13,46 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
 var client http.Client
 
-func gitlabGetProjectId(gitlabUrl string, gitlabApiToken string, gitlabProject string) (string, error) {
+type GitlabData struct {
+	GitlabUrl      string
+	GitlabApiToken string
+}
+
+func GetGitlabDataObject() GitlabData {
+	viper.SetConfigFile("config.json")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Println("Config file not found !!!")
+		}
+	}
+
+	url := viper.GetString("gitlab.url")
+	if url == "" {
+		helpers.GitlabUrlNotFoundErrorHandler()
+		url = "https://gitlab.com"
+	}
+
+	apiToken := viper.GetString("gitlab.api_token")
+	if apiToken == "" {
+		helpers.GitlabApiTokenNotFoundErrorHandler()
+	}
+
+	g := GitlabData{GitlabUrl: url, GitlabApiToken: apiToken}
+	return g
+}
+
+func (g *GitlabData) gitlabGetProjectId(gitlabProject string) (string, error) {
 	var data []map[string]interface{}
 	var projectId string
-	Url := gitlabUrl + "/api/v4/search?scope=projects&search=" + gitlabProject
+	Url := g.GitlabUrl + "/api/v4/search?scope=projects&search=" + gitlabProject
 	req, err := http.NewRequest("GET", Url, nil)
-	req.Header.Set("PRIVATE-TOKEN", gitlabApiToken)
+	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 
 	res, err := client.Do(req)
 
@@ -54,10 +83,10 @@ func gitlabGetProjectId(gitlabUrl string, gitlabApiToken string, gitlabProject s
 	return projectId, nil
 }
 
-func gitlabVariablesPostRequest(gitlabUrl string, gitlabApiToken string, projectId string, postBody []byte) ([]byte, error) {
-	url := gitlabUrl + "/api/v4/projects/" + projectId + "/variables"
+func (g *GitlabData) gitlabVariablesPostRequest(projectId string, postBody []byte) ([]byte, error) {
+	url := g.GitlabUrl + "/api/v4/projects/" + projectId + "/variables"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(postBody))
-	req.Header.Set("PRIVATE-TOKEN", gitlabApiToken)
+	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := client.Do(req)
@@ -72,10 +101,10 @@ func gitlabVariablesPostRequest(gitlabUrl string, gitlabApiToken string, project
 	return result, nil
 }
 
-func gitlabVariablesDeleteRequest(gitlabUrl string, gitlabApiToken string, projectId string, key string, env string) ([]byte, error) {
-	url := gitlabUrl + "/api/v4/projects/" + projectId + "/variables/" + key + "?filter[environment_scope]=" + env
+func (g *GitlabData) gitlabVariablesDeleteRequest(projectId string, key string, env string) ([]byte, error) {
+	url := g.GitlabUrl + "/api/v4/projects/" + projectId + "/variables/" + key + "?filter[environment_scope]=" + env
 	req, err := http.NewRequest("DELETE", url, nil)
-	req.Header.Set("PRIVATE-TOKEN", gitlabApiToken)
+	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -89,13 +118,13 @@ func gitlabVariablesDeleteRequest(gitlabUrl string, gitlabApiToken string, proje
 	return result, nil
 }
 
-func gitlabGetFileRequest(gitlabUrl string, gitlabApiToken string, projectId string, filePath string, branch string) ([]byte, error) {
+func (g *GitlabData) gitlabGetFileRequest(projectId string, filePath string, branch string) ([]byte, error) {
 	var resultData map[string]interface{}
 	filePath = strings.ReplaceAll(filePath, "/", "%2F")
 	filePath = strings.ReplaceAll(filePath, ".", "%2E")
-	url := gitlabUrl + "/api/v4/projects/" + projectId + "/repository/files/" + filePath + "?ref=" + branch
+	url := g.GitlabUrl + "/api/v4/projects/" + projectId + "/repository/files/" + filePath + "?ref=" + branch
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("PRIVATE-TOKEN", gitlabApiToken)
+	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -112,44 +141,44 @@ func gitlabGetFileRequest(gitlabUrl string, gitlabApiToken string, projectId str
 	return decodedData, nil
 }
 
-func GenerateEnvsSpringBoot(gitlabUrl, gitlabApiToken, gitlabProject, gitlabBranch string) {
+func (g *GitlabData) GenerateEnvsSpringBoot(gitlabProject, gitlabBranch string) {
 	var yamlFile map[string]interface{}
 
-	projectId, err := gitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
+	projectId, err := g.gitlabGetProjectId(gitlabProject)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in getting gitlab project id")
 	}
-	res, err := gitlabGetFileRequest(gitlabUrl, gitlabApiToken, projectId, "src/main/resources/application.yml", gitlabBranch)
+	res, err := g.gitlabGetFileRequest(projectId, "src/main/resources/application.yml", gitlabBranch)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in getting gitlab requested file")
 	}
 
 	yaml.Unmarshal(res, &yamlFile)
 	helpers.Walk(yamlFile)
 }
 
-func DeleteEnv(gitlabUrl, gitlabApiToken, gitlabProject, key, env string) {
-	projectId, err := gitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
+func (g *GitlabData) DeleteEnv(gitlabProject, key, env string) {
+	projectId, err := g.gitlabGetProjectId(gitlabProject)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in getting gitlab project id")
 	}
 
-	_, err = gitlabVariablesDeleteRequest(gitlabUrl, gitlabApiToken, projectId, key, env)
+	_, err = g.gitlabVariablesDeleteRequest(projectId, key, env)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in deleting gitlab env")
 	}
 	fmt.Println(fmt.Sprintf("The %v key in %v environment_scope is deleted", key, env))
 }
 
-func AddEnvFromFile(gitlabUrl, gitlabApiToken, gitlabProject, file, env string) {
-	projectId, err := gitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
+func (g *GitlabData) AddEnvFromFile(gitlabProject, file, env string) {
+	projectId, err := g.gitlabGetProjectId(gitlabProject)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in getting gitlab project id")
 	}
 
 	readFile, err := os.Open(file)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in opening file")
 	}
 
 	fileScanner := bufio.NewScanner(readFile)
@@ -163,9 +192,9 @@ func AddEnvFromFile(gitlabUrl, gitlabApiToken, gitlabProject, file, env string) 
 			"environment_scope": env,
 		})
 
-		_, err = gitlabVariablesPostRequest(gitlabUrl, gitlabApiToken, projectId, postBody)
+		_, err = g.gitlabVariablesPostRequest(projectId, postBody)
 		if err != nil {
-			helpers.CmdErrorHandler(err)
+			helpers.CmdErrorHandler(err, "some error in posting gitlab env")
 		}
 		fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", tmp[0], tmp[1], env))
 
@@ -174,10 +203,10 @@ func AddEnvFromFile(gitlabUrl, gitlabApiToken, gitlabProject, file, env string) 
 	readFile.Close()
 }
 
-func AddEnv(gitlabUrl, gitlabApiToken, gitlabProject, key, value, env string) {
-	projectId, err := gitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
+func (g *GitlabData) AddEnv(gitlabProject, key, value, env string) {
+	projectId, err := g.gitlabGetProjectId(gitlabProject)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in getting gitlab project id")
 	}
 
 	postBody, _ := json.Marshal(map[string]string{
@@ -186,20 +215,20 @@ func AddEnv(gitlabUrl, gitlabApiToken, gitlabProject, key, value, env string) {
 		"environment_scope": env,
 	})
 
-	_, err = gitlabVariablesPostRequest(gitlabUrl, gitlabApiToken, projectId, postBody)
+	_, err = g.gitlabVariablesPostRequest(projectId, postBody)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in posting gitlab env")
 	}
 	fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", key, value, env))
 }
 
-func GenerateDockerfile(gitlabUrl, gitlabApiToken, gitlabProject string) {
-	projectId, err := gitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
+func (g *GitlabData) GenerateDockerfile(gitlabProject string) {
+	projectId, err := g.gitlabGetProjectId(gitlabProject)
 	if err != nil {
-		helpers.CmdErrorHandler(err)
+		helpers.CmdErrorHandler(err, "some error in getting gitlab project id")
 	}
 
-	res, err := gitlabGetFileRequest(gitlabUrl, gitlabApiToken, projectId, "pom.xml", "dev")
+	res, err := g.gitlabGetFileRequest(projectId, "pom.xml", "dev")
 	if err != nil {
 		panic(err)
 	}

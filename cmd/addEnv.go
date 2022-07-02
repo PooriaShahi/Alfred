@@ -16,14 +16,13 @@ var addEnvCmd = &cobra.Command{
 	Short: "Add environment variables from CLI to a specific project in gitlab",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
-		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
+		gitlab := operations.GetGitlabDataObject()
 		gitlabProject, _ := cmd.Flags().GetString("project")
 		key, _ := cmd.Flags().GetString("key")
 		value, _ := cmd.Flags().GetString("value")
 		env, _ := cmd.Flags().GetString("env")
 
-		operations.AddEnv(gitlabUrl, gitlabApiToken, gitlabProject, key, value, env)
+		gitlab.AddEnv(gitlabProject, key, value, env)
 	},
 }
 

@@ -11,7 +11,7 @@ RUN mvn package -DskipTests
 FROM store/oracle/serverjre:1.8.0_241-b07
 WORKDIR /app
 COPY --from=build /develop/target/` + jarFileName + ` /app
-CMD ["java", "-jar", "/app/` + jarFileName + `]`
+CMD ["java", "-jar", "/app/` + jarFileName + `"]`
 	return tmpl
 }
 

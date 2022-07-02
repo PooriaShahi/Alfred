@@ -16,11 +16,10 @@ var generateDockerfileCmd = &cobra.Command{
 	Short: "A brief description of your command",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
-		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
+		gitlab := operations.GetGitlabDataObject()
 		gitlabProject, _ := cmd.Flags().GetString("project")
 
-		operations.GenerateDockerfile(gitlabUrl, gitlabApiToken, gitlabProject)
+		gitlab.GenerateDockerfile(gitlabProject)
 	},
 }
 
