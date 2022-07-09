@@ -5,9 +5,7 @@ Copyright © 2022 Pooria Shahi <PooriaPro@gmail.com>
 package cmd
 
 import (
-	"alfred/helpers"
 	"alfred/operations"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -18,22 +16,12 @@ var deleteEnvCmd = &cobra.Command{
 	Short: "Delete environment variables from CLI or from a file to a specific project in gitlab",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		gitlabUrl, _ := cmd.Flags().GetString("gitlab-url")
-		gitlabApiToken, _ := cmd.Flags().GetString("gitlab-api-token")
+		gitlab := operations.GetGitlabDataObject()
 		gitlabProject, _ := cmd.Flags().GetString("project")
-		projectId, err := operations.GitlabGetProjectId(gitlabUrl, gitlabApiToken, gitlabProject)
-		if err != nil {
-			helpers.CmdErrorHandler(err)
-		}
-
 		key, _ := cmd.Flags().GetString("key")
 		env, _ := cmd.Flags().GetString("env")
 
-		_, err = operations.GitlabVariablesDeleteRequest(gitlabUrl, gitlabApiToken, projectId, key, env)
-		if err != nil {
-			helpers.CmdErrorHandler(err)
-		}
-		fmt.Println(fmt.Sprintf("The %v key in %v environment_scope is deleted", key, env))
+		gitlab.DeleteEnv(gitlabProject, key, env)
 	},
 }
 

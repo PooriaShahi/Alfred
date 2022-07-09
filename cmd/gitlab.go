@@ -22,10 +22,7 @@ var gitlabCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(gitlabCmd)
-	gitlabCmd.PersistentFlags().String("gitlab-url", "https://gitlab.com", "Gitlab url")
-	gitlabCmd.PersistentFlags().String("gitlab-api-token", "", "Gitlab api token")
 	gitlabCmd.PersistentFlags().StringP("project", "p", "", "Gitlab Project Name")
 
-	gitlabCmd.MarkPersistentFlagRequired("gitlab-api-token")
 	gitlabCmd.MarkPersistentFlagRequired("project")
 }
