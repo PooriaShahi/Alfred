@@ -52,6 +52,9 @@ func (g *GitlabData) gitlabGetProjectId(gitlabProject string) (string, error) {
 	var projectId string
 	Url := g.GitlabUrl + "/api/v4/search?scope=projects&search=" + gitlabProject
 	req, err := http.NewRequest("GET", Url, nil)
+	if err != nil {
+		return "", err
+	}
 	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 
 	res, err := client.Do(req)
@@ -61,11 +64,13 @@ func (g *GitlabData) gitlabGetProjectId(gitlabProject string) (string, error) {
 	}
 
 	if res.StatusCode == 401 {
-		fmt.Println("Failed -> Your Gitlab Api Token is invalid or expired!!!")
-		os.Exit(1)
+		helpers.UnauthorizedGitlabApiToken()
 	}
 
 	result, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
 	err = json.Unmarshal(result, &data)
 	if err != nil {
 		return "", err
@@ -86,6 +91,9 @@ func (g *GitlabData) gitlabGetProjectId(gitlabProject string) (string, error) {
 func (g *GitlabData) gitlabVariablesPostRequest(projectId string, postBody []byte) ([]byte, error) {
 	url := g.GitlabUrl + "/api/v4/projects/" + projectId + "/variables"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(postBody))
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -104,6 +112,9 @@ func (g *GitlabData) gitlabVariablesPostRequest(projectId string, postBody []byt
 func (g *GitlabData) gitlabVariablesDeleteRequest(projectId string, key string, env string) ([]byte, error) {
 	url := g.GitlabUrl + "/api/v4/projects/" + projectId + "/variables/" + key + "?filter[environment_scope]=" + env
 	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 
 	res, err := client.Do(req)
@@ -124,6 +135,9 @@ func (g *GitlabData) gitlabGetFileRequest(projectId string, filePath string, bra
 	filePath = strings.ReplaceAll(filePath, ".", "%2E")
 	url := g.GitlabUrl + "/api/v4/projects/" + projectId + "/repository/files/" + filePath + "?ref=" + branch
 	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("PRIVATE-TOKEN", g.GitlabApiToken)
 
 	res, err := client.Do(req)
@@ -167,7 +181,7 @@ func (g *GitlabData) DeleteEnv(gitlabProject, key, env string) {
 	if err != nil {
 		helpers.CmdErrorHandler(err, "some error in deleting gitlab env")
 	}
-	fmt.Println(fmt.Sprintf("The %v key in %v environment_scope is deleted", key, env))
+	fmt.Printf("The %v key in %v environment_scope is deleted\n", key, env)
 }
 
 func (g *GitlabData) AddEnvFromFile(gitlabProject, file, env string) {
@@ -196,7 +210,7 @@ func (g *GitlabData) AddEnvFromFile(gitlabProject, file, env string) {
 		if err != nil {
 			helpers.CmdErrorHandler(err, "some error in posting gitlab env")
 		}
-		fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", tmp[0], tmp[1], env))
+		fmt.Printf("The %v key with %v value in %v environment_scope is added\n", tmp[0], tmp[1], env)
 
 	}
 
@@ -219,7 +233,7 @@ func (g *GitlabData) AddEnv(gitlabProject, key, value, env string) {
 	if err != nil {
 		helpers.CmdErrorHandler(err, "some error in posting gitlab env")
 	}
-	fmt.Println(fmt.Sprintf("The %v key with %v value in %v environment_scope is added", key, value, env))
+	fmt.Printf("The %v key with %v value in %v environment_scope is added\n", key, value, env)
 }
 
 func (g *GitlabData) GenerateDockerfile(gitlabProject string) {
