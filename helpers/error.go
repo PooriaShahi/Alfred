@@ -23,3 +23,8 @@ func GitlabUrlNotFoundErrorHandler() {
 	Or you can set your gitlab url with Config command and rerun your command`
 	fmt.Println(text)
 }
+
+func UnauthorizedGitlabApiToken() {
+	fmt.Println("Failed -> Your Gitlab Api Token is invalid or expired!!!")
+	os.Exit(1)
+}
