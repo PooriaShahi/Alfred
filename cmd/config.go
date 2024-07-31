@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 Pooria Shahi <PooriaPro@gmail.com>
-
 */
 package cmd
 
